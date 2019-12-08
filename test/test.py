@@ -1,68 +1,69 @@
-danger_map=[]
-safety_map=[]
+N,D=0,0
+charging_stations=[]
+my_location=(0,0)
+target_location=(0,0)
+paths={'M':[],'T':[]}
 
-def init_map():
-    init_line=list(input())
-    danger_map.append(init_line)
-    n=len(init_line)
-    for _ in range(n-1):
-        danger_map.append(list(input()))
-    for i in range(n):
-        safety_map.append([])
-        for _ in range(n):
-            safety_map[i].append('0')
-    for i,v in enumerate(danger_map):
-        for j,w in enumerate(v):
-            if w=='1':
-                safety_map[i][j]='#'
+def init():
+    global N,D,charging_stations,my_location,target_location,paths
+    N,D=tuple(map(int,input().split()))
+    for _ in range(N):
+        charging_stations.append(tuple(map(int,input().split())))
+    my_location=tuple(map(int,input().split()))
+    target_location=tuple(map(int,input().split()))
+    for i,v in enumerate(charging_stations):
+        paths[i]=[]
+    xM,yM=my_location
+    xT,yT=target_location
+    if (xT-xM)**2+(yT-yM)**2<=D**2:
+        paths['M'].append('T')
+        paths['T'].append('M')
+    for i,v in enumerate(charging_stations):
+        x,y=v
+        if (x-xM)**2+(y-yM)**2<=D**2:
+            paths['M'].append(i)
+            paths[i].append('M')
+        if (x-xT)**2+(y-yT)**2<=D**2:
+            paths['T'].append(i)
+            paths[i].append('T')
+        for j,w in enumerate(charging_stations):
+            if i==j:
+                continue
+            x2,y2=w
+            if (x-x2)**2+(y-y2)**2<=D**2:
+                paths[i].append(j)
     return
 
-def judge(pos,level):
-    i,j=pos
-    n=len(safety_map)
-    if level==1:
-        for p in range(i-1,i+2):
-            for q in range(j-1,j+2):
-                if not (p>=0 and p<=n-1 and q>=0 and q<=n-1):
-                    continue
-                else:
-                    if danger_map[p][q]=='1':
-                        return False
+def find():
+    q=[]
+    visited={}
+    visited['M']=False
+    visited['T']=False
+    for i,_ in enumerate(charging_stations):
+        visited[i]=False
+    current='M'
+    visited[current]=True
+    for i in paths[current]:
+        if visited[i]==False and i not in q:
+            q.append(i)
+    while len(q)>0 and not visited['T']:
+        current=q.pop(0)
+        visited[current]=True
+        for i in paths[current]:
+            if visited[i]==False and i not in q:
+                q.append(i)
+    if visited['T']:
         return True
-
-    elif level==2:
-        for p in range(i-2,i+3):
-            for q in range(j-2,j+3):
-                if not (p>=0 and p<=n-1 and q>=0 and q<=n-1):
-                    continue
-                else:
-                    if danger_map[p][q]=='1':
-                        return False
-        return True
+    else:
+        return False
     return False
 
-def modify():
-    safety_map_copy=safety_map
-    for i,v in enumerate(safety_map_copy):
-        for j,w in enumerate(v):
-            if w=='#':
-                continue
-            else:
-                if judge((i,j),1):
-                    safety_map[i][j]='1'
-                if judge((i,j),2):
-                    safety_map[i][j]='2'
-    return
-
-def show():
-    for i in safety_map:
-        print(''.join(i))
-    return
-
 def main():
-    init_map()
-    modify()
-    show()
+    init()
+    if find():
+        print('y')
+    else:
+        print('n')
     return
 
 main()
